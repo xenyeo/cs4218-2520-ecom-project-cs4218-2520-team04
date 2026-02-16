@@ -1,6 +1,6 @@
 import express from "express";
 import {
-  brainTreePaymentController,
+  braintreePaymentController,
   braintreeTokenController,
   createProductController,
   deleteProductController,
@@ -46,7 +46,7 @@ router.get("/get-product/:slug", getSingleProductController);
 //get photo
 router.get("/product-photo/:pid", productPhotoController);
 
-//delete rproduct
+//delete product
 router.delete("/delete-product/:pid", deleteProductController);
 
 //filter product
@@ -72,6 +72,6 @@ router.get("/product-category/:slug", productCategoryController);
 router.get("/braintree/token", braintreeTokenController);
 
 //payments
-router.post("/braintree/payment", requireSignIn, brainTreePaymentController);
+router.post("/braintree/payment", requireSignIn, braintreePaymentController);
 
 export default router;
