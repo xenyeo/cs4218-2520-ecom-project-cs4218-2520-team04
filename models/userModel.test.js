@@ -1,3 +1,6 @@
+//
+// Tan Wei Lian, A0269750U
+//
 import mongoose from "mongoose";
 import userModel from "./userModel.js";
 

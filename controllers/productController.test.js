@@ -60,6 +60,7 @@ afterEach(() => {
 
 
 
+// Tan Wei Lian, A0269750U
 describe("createProductController", () => {
   let res;
 
@@ -490,6 +491,7 @@ describe("createProductController", () => {
   });
 });
 
+// Tan Wei Lian, A0269750U
 describe("deleteProductController", () => {
   let res;
 
@@ -597,6 +599,7 @@ describe("deleteProductController", () => {
   });
 });
 
+// Tan Wei Lian, A0269750U
 describe("updateProductController", () => {
   let res;
 

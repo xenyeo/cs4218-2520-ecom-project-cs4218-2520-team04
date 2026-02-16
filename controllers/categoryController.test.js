@@ -37,6 +37,7 @@ afterEach(() => {
   jest.restoreAllMocks();
 });
 
+// Tan Wei Lian, A0269750U
 describe("createCategoryController", () => {
   let req, res;
 
@@ -218,6 +219,7 @@ describe("createCategoryController", () => {
 });
 
 
+// Tan Wei Lian, A0269750U
 describe("updateCategoryController", () => {
   let req, res;
 
@@ -382,6 +384,7 @@ describe("updateCategoryController", () => {
 });
 
 
+// Tan Wei Lian, A0269750U
 describe("deleteCategoryController", () => {
   let req, res;
 
