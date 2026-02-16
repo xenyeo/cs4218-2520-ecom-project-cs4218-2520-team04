@@ -16,12 +16,12 @@ const Profile = () => {
 
   //get user data
   useEffect(() => {
-    const { email, name, phone, address } = auth?.user;
-    setName(name);
-    setPhone(phone);
-    setEmail(email);
-    setAddress(address);
-  }, [auth?.user]);
+  const { email, name, phone, address } = auth?.user || {};
+  setName(name || "");
+  setPhone(phone || "");
+  setEmail(email || "");
+  setAddress(address || "");
+}, [auth?.user]);
 
   // form function
   const handleSubmit = async (e) => {
@@ -75,7 +75,6 @@ const Profile = () => {
                   <input
                     type="email"
                     value={email}
-                    onChange={(e) => setEmail(e.target.value)}
                     className="form-control"
                     id="exampleInputEmail1"
                     placeholder="Enter Your Email "
