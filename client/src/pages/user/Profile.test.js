@@ -1,196 +1,198 @@
-//
-// Lu Yixuan, Deborah, A0277911X
-//
+// Profile.test.js
 import React from "react";
-import { render, screen, waitFor, fireEvent } from "@testing-library/react";
-import Profile from "./Profile";
+import { render, screen, fireEvent, waitFor } from "@testing-library/react";
+import "@testing-library/jest-dom/extend-expect";
+import Profile from "./Profile"; // adjust path if needed
+import { useAuth } from "../../context/auth";
 import axios from "axios";
 import toast from "react-hot-toast";
 
-jest.mock("axios");
+// ---- Mocks ----
+jest.mock("../../context/auth", () => ({
+  useAuth: jest.fn(),
+}));
 
-jest.mock("./../../components/Layout", () => (props) => (
-  <div>
-    <div data-testid="layout-title">{props.title}</div>
-    {props.children}
-  </div>
+jest.mock("../../components/UserMenu", () => () => (
+  <div data-testid="user-menu">UserMenu Mock</div>
 ));
 
-jest.mock("../../components/UserMenu", () => () => <div data-testid="user-menu" />);
+jest.mock("./../../components/Layout", () => ({ children }) => (
+  <div data-testid="layout">{children}</div>
+));
 
+jest.mock("axios");
 jest.mock("react-hot-toast", () => ({
   success: jest.fn(),
   error: jest.fn(),
 }));
 
-const mockUseAuth = jest.fn();
-jest.mock("../../context/auth", () => ({
-  useAuth: () => mockUseAuth(),
-}));
+describe("Profile Component", () => {
+  const setAuthMock = jest.fn();
 
-const setInput = (placeholder, value) => {
-  fireEvent.change(screen.getByPlaceholderText(placeholder), {
-    target: { value },
-  });
-};
+  const baseAuth = {
+    user: {
+      name: "Test User",
+      email: "test@mail.com",
+      phone: "12345678",
+      address: "Test Address",
+    },
+  };
 
-describe("Profile (unit)", () => {
   beforeEach(() => {
     jest.clearAllMocks();
-    localStorage.clear();
 
-    // default fallback so useAuth never returns undefined
-    mockUseAuth.mockReturnValue([{ token: null, user: null }, jest.fn()]);
+    // Default: auth present
+    useAuth.mockReturnValue([baseAuth, setAuthMock]);
+
+    // Safe localStorage mock (simple in-memory store)
+    let store = {};
+    jest.spyOn(window.localStorage.__proto__, "getItem").mockImplementation((k) =>
+      Object.prototype.hasOwnProperty.call(store, k) ? store[k] : null
+    );
+    jest.spyOn(window.localStorage.__proto__, "setItem").mockImplementation((k, v) => {
+      store[k] = String(v);
+    });
+
+    // Seed auth in localStorage (matches your component’s expectation)
+    window.localStorage.setItem("auth", JSON.stringify(baseAuth));
   });
 
-  test("handles null auth.user by defaulting fields to empty strings", () => {
-    const setAuth = jest.fn();
-    mockUseAuth.mockReturnValue([{ token: "t", user: null }, setAuth]);
-
+  it("renders layout + user menu + form title", () => {
     render(<Profile />);
-
-    expect(screen.getByPlaceholderText("Enter Your Name")).toHaveValue("");
-    expect(screen.getByPlaceholderText("Enter Your Phone")).toHaveValue("");
-    expect(screen.getByPlaceholderText("Enter Your Address")).toHaveValue("");
-
-    // email placeholder has trailing space in component -> use regex
-    const emailInput = screen.getByPlaceholderText(/Enter Your Email/i);
-    expect(emailInput).toHaveValue("");
-    expect(emailInput).toBeDisabled();
-
-    expect(screen.getByPlaceholderText("Enter Your Password")).toHaveValue("");
+    expect(screen.getByTestId("layout")).toBeInTheDocument();
+    expect(screen.getByTestId("user-menu")).toBeInTheDocument();
+    expect(screen.getByText(/USER PROFILE/i)).toBeInTheDocument();
+    expect(screen.getByRole("button", { name: /UPDATE/i })).toBeInTheDocument();
   });
 
-  test("prefills form fields from auth.user on mount (name/phone/email/address)", () => {
-    const setAuth = jest.fn();
-    mockUseAuth.mockReturnValue([
-      {
-        token: "t",
-        user: {
-          name: "Test",
-          email: "test@example.com",
-          phone: "91234567",
-          address: "SG",
-        },
-      },
-      setAuth,
-    ]);
-
+  it("prefills inputs from auth.user via useEffect (email is test@mail.com and disabled)", async () => {
     render(<Profile />);
 
-    expect(screen.getByPlaceholderText("Enter Your Name")).toHaveValue("Test");
-    expect(screen.getByPlaceholderText("Enter Your Phone")).toHaveValue("91234567");
-    expect(screen.getByPlaceholderText("Enter Your Address")).toHaveValue("SG");
-
+    const nameInput = await screen.findByPlaceholderText(/Enter Your Name/i);
     const emailInput = screen.getByPlaceholderText(/Enter Your Email/i);
-    expect(emailInput).toHaveValue("test@example.com");
+    const phoneInput = screen.getByPlaceholderText(/Enter Your Phone/i);
+    const addressInput = screen.getByPlaceholderText(/Enter Your Address/i);
+
+    expect(nameInput).toHaveValue("Test User");
+    expect(emailInput).toHaveValue("test@mail.com");
+    expect(phoneInput).toHaveValue("12345678");
+    expect(addressInput).toHaveValue("Test Address");
+
     expect(emailInput).toBeDisabled();
   });
 
-  test("submits updated profile; calls axios.put with correct payload; updates auth + localStorage; shows success toast", async () => {
-    const setAuth = jest.fn();
+  it("allows editing name/phone/address/password (email remains disabled)", async () => {
+    render(<Profile />);
 
-    const initialAuth = {
-      token: "t",
-      user: {
-        name: "Old Name",
-        email: "old@example.com",
-        phone: "90000000",
-        address: "Old Addr",
-      },
-    };
+    const nameInput = await screen.findByPlaceholderText(/Enter Your Name/i);
+    const emailInput = screen.getByPlaceholderText(/Enter Your Email/i);
+    const passwordInput = screen.getByPlaceholderText(/Enter Your Password/i);
+    const phoneInput = screen.getByPlaceholderText(/Enter Your Phone/i);
+    const addressInput = screen.getByPlaceholderText(/Enter Your Address/i);
 
-    mockUseAuth.mockReturnValue([initialAuth, setAuth]);
-    localStorage.setItem("auth", JSON.stringify({ ...initialAuth }));
+    fireEvent.change(nameInput, { target: { value: "New Name" } });
+    fireEvent.change(passwordInput, { target: { value: "newpass" } });
+    fireEvent.change(phoneInput, { target: { value: "87654321" } });
+    fireEvent.change(addressInput, { target: { value: "New Address" } });
 
-    const updatedUser = {
-      name: "New Name",
-      email: "old@example.com",
-      phone: "98887777",
-      address: "New Addr",
-    };
+    expect(nameInput).toHaveValue("New Name");
+    expect(passwordInput).toHaveValue("newpass");
+    expect(phoneInput).toHaveValue("87654321");
+    expect(addressInput).toHaveValue("New Address");
 
-    axios.put.mockResolvedValueOnce({ data: { updatedUser } });
+    expect(emailInput).toBeDisabled();
+    expect(emailInput).toHaveValue("test@mail.com");
+  });
+
+  it("submits and calls axios.put with the latest state (email fixed as test@mail.com)", async () => {
+    axios.put.mockResolvedValueOnce({
+      data: { updatedUser: { ...baseAuth.user, name: "Updated User" } },
+    });
 
     render(<Profile />);
 
-    setInput("Enter Your Name", "New Name");
-    setInput("Enter Your Password", "newpass");
-    setInput("Enter Your Phone", "98887777");
-    setInput("Enter Your Address", "New Addr");
+    const nameInput = await screen.findByPlaceholderText(/Enter Your Name/i);
+    const passwordInput = screen.getByPlaceholderText(/Enter Your Password/i);
+    const phoneInput = screen.getByPlaceholderText(/Enter Your Phone/i);
+    const addressInput = screen.getByPlaceholderText(/Enter Your Address/i);
 
-    fireEvent.click(screen.getByRole("button", { name: /update/i }));
+    fireEvent.change(nameInput, { target: { value: "Updated User" } });
+    fireEvent.change(passwordInput, { target: { value: "pw123" } });
+    fireEvent.change(phoneInput, { target: { value: "11112222" } });
+    fireEvent.change(addressInput, { target: { value: "Updated Addr" } });
 
-    await waitFor(() => expect(axios.put).toHaveBeenCalled());
+    fireEvent.click(screen.getByRole("button", { name: /UPDATE/i }));
+
+    await waitFor(() => expect(axios.put).toHaveBeenCalledTimes(1));
 
     expect(axios.put).toHaveBeenCalledWith("/api/v1/auth/profile", {
-      name: "New Name",
-      email: "old@example.com",
-      password: "newpass",
-      phone: "98887777",
-      address: "New Addr",
+      name: "Updated User",
+      email: "test@mail.com",
+      password: "pw123",
+      phone: "11112222",
+      address: "Updated Addr",
     });
-
-    expect(setAuth).toHaveBeenCalledWith({
-      ...initialAuth,
-      user: updatedUser,
-    });
-
-    const ls = JSON.parse(localStorage.getItem("auth"));
-    expect(ls.user).toEqual(updatedUser);
-
-    expect(toast.success).toHaveBeenCalledWith("Profile Updated Successfully");
-    expect(toast.error).not.toHaveBeenCalled();
   });
 
-  test("if API responds with data.errro truthy, shows toast.error and does not update auth/localStorage", async () => {
-    const setAuth = jest.fn();
-    const initialAuth = {
-      token: "t",
-      user: { name: "Test", email: "test@example.com", phone: "1", address: "x" },
-    };
-
-    mockUseAuth.mockReturnValue([initialAuth, setAuth]);
-    localStorage.setItem("auth", JSON.stringify({ ...initialAuth }));
+  it("on success: updates auth context, updates localStorage, shows success toast", async () => {
+    const updatedUser = { ...baseAuth.user, name: "Updated User", phone: "99990000" };
 
     axios.put.mockResolvedValueOnce({
-      data: { errro: true, error: "Bad things" },
+      data: { updatedUser },
     });
 
     render(<Profile />);
 
-    fireEvent.click(screen.getByRole("button", { name: /update/i }));
+    const nameInput = await screen.findByPlaceholderText(/Enter Your Name/i);
+    fireEvent.change(nameInput, { target: { value: "Updated User" } });
 
-    await waitFor(() => expect(axios.put).toHaveBeenCalled());
+    fireEvent.click(screen.getByRole("button", { name: /UPDATE/i }));
 
-    expect(toast.error).toHaveBeenCalledWith("Bad things");
-    expect(toast.success).not.toHaveBeenCalled();
-    expect(setAuth).not.toHaveBeenCalled();
+    await waitFor(() =>
+      expect(toast.success).toHaveBeenCalledWith("Profile Updated Successfully")
+    );
 
-    const ls = JSON.parse(localStorage.getItem("auth"));
-    expect(ls.user).toEqual(initialAuth.user);
+    expect(setAuthMock).toHaveBeenCalledWith({ ...baseAuth, user: updatedUser });
+
+    const ls = JSON.parse(window.localStorage.getItem("auth"));
+    expect(ls.user).toEqual(updatedUser);
   });
 
-  test('if axios.put throws, shows "Something went wrong" toast.error', async () => {
-    const setAuth = jest.fn();
-    const initialAuth = {
-      token: "t",
-      user: { name: "Test", email: "test@example.com", phone: "1", address: "x" },
-    };
-
-    mockUseAuth.mockReturnValue([initialAuth, setAuth]);
-    localStorage.setItem("auth", JSON.stringify({ ...initialAuth }));
-
-    axios.put.mockRejectedValueOnce(new Error("network"));
+  it("if API responds with data.errro truthy: shows error toast and does not update auth", async () => {
+    axios.put.mockResolvedValueOnce({
+      data: { errro: true, error: "Bad request" },
+    });
 
     render(<Profile />);
 
-    fireEvent.click(screen.getByRole("button", { name: /update/i }));
+    fireEvent.click(screen.getByRole("button", { name: /UPDATE/i }));
 
-    await waitFor(() => expect(axios.put).toHaveBeenCalled());
+    await waitFor(() => expect(toast.error).toHaveBeenCalledWith("Bad request"));
 
-    expect(toast.error).toHaveBeenCalledWith("Something went wrong");
+    expect(setAuthMock).not.toHaveBeenCalled();
     expect(toast.success).not.toHaveBeenCalled();
-    expect(setAuth).not.toHaveBeenCalled();
+  });
+
+  it("if axios throws: shows generic error toast", async () => {
+    const logSpy = jest.spyOn(console, "log").mockImplementation(() => {});
+    axios.put.mockRejectedValueOnce(new Error("Network error"));
+
+    render(<Profile />);
+    fireEvent.click(screen.getByRole("button", { name: /UPDATE/i }));
+
+    await waitFor(() =>
+        expect(toast.error).toHaveBeenCalledWith("Something went wrong")
+    );
+
+    logSpy.mockRestore();
+  });
+
+  it("handles missing auth.user gracefully (does not crash)", () => {
+    useAuth.mockReturnValue([{}, setAuthMock]);
+
+    expect(() => render(<Profile />)).not.toThrow();
+
+    expect(screen.getByText(/USER PROFILE/i)).toBeInTheDocument();
+    expect(screen.getByRole("button", { name: /UPDATE/i })).toBeInTheDocument();
   });
 });

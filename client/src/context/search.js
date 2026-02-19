@@ -1,27 +1,21 @@
-import React, { useState, useContext, createContext } from "react";
+import React from "react";
+import { useState, useContext, createContext } from "react";
 
-const SearchContext = createContext(null);
-
+const SearchContext = createContext();
 const SearchProvider = ({ children }) => {
-  const [search, setSearch] = useState({
+  const [auth, setAuth] = useState({
     keyword: "",
     results: [],
   });
 
   return (
-    <SearchContext.Provider value={[search, setSearch]}>
+    <SearchContext.Provider value={[auth, setAuth]}>
       {children}
     </SearchContext.Provider>
   );
 };
 
 // custom hook
-const useSearch = () => {
-  const ctx = useContext(SearchContext);
-  if (!ctx) {
-    throw new Error("useSearch must be used within a SearchProvider");
-  }
-  return ctx;
-};
+const useSearch = () => useContext(SearchContext);
 
 export { useSearch, SearchProvider };
