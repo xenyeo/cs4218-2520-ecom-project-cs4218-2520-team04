@@ -27,10 +27,9 @@ export const registerController = async (req, res) => {
     if (!answer) {
       return res.send({ message: "Answer is required" });
     }
-
-    // check user
+    //check user
     const existingUser = await userModel.findOne({ email });
-
+    //existing user
     if (existingUser) {
       return res.status(200).send({
         success: false,
@@ -126,7 +125,7 @@ export const forgotPasswordController = async (req, res) => {
     const { email, answer, newPassword } = req.body;
 
     if (!email) {
-      return res.status(400).send({ message: "Email is required" });
+      res.status(400).send({ message: "Email is required" });
     }
     if (!answer) {
       return res.status(400).send({ message: "Answer is required" });
