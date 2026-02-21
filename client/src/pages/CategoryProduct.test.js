@@ -5,6 +5,9 @@ import axios from "axios";
 import { render, waitFor, screen } from "@testing-library/react";
 import CategoryProduct from "./CategoryProduct";
 
+// Silences the console log
+console.log = jest.fn();
+
 // Mock useParams() and useNavigate()
 jest.mock("react-router-dom", () => ({
     useParams: jest.fn(),
@@ -146,14 +149,10 @@ describe("CategoryProduct useEffect test", () => {
     })
 });
 
-describe("getProductsByCat test", () => {
+describe("getProductsByCat test", () => {    
     // Set up & tear down
     beforeEach(() => { jest.clearAllMocks(); });
     afterEach(() => { jest.restoreAllMocks(); });
-    afterAll(() => { consoleSpy.mockRestore(); });
-
-    // For error checking
-    const consoleSpy = jest.spyOn(console, "log").mockImplementation();
 
     // Happy Path: Testing done using UI components
     test("should display products in the UI if getProductsByCat is run successfully", async () => {
@@ -205,6 +204,9 @@ describe("getProductsByCat test", () => {
 
     // setPromise & setCategory does not return any errors
     test("catch block should handle axios.get promise rejects", async () => {
+        // For error checking
+        const consoleSpy = jest.spyOn(console, "log").mockImplementation(() => {});
+
         // Arrange
         useParams.mockReturnValue({ slug: "test-category" });
         const axiosError = new Error("Promise Rejected");
