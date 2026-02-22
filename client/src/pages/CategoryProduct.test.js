@@ -2,7 +2,7 @@
 import React from "react";
 import { useParams, useNavigate } from "react-router-dom";
 import axios from "axios";
-import { render, waitFor, screen } from "@testing-library/react";
+import { render, waitFor, screen, fireEvent } from "@testing-library/react";
 import CategoryProduct from "./CategoryProduct";
 
 // Silences the console log
@@ -220,5 +220,56 @@ describe("getProductsByCat test", () => {
             expect(axios.get).toHaveBeenCalledWith("/api/v1/product/product-category/test-category");
             expect(consoleSpy).toHaveBeenCalledWith(axiosError);
         });
+    });
+});
+
+describe("CategoryProduct Navigation", () => {
+    const mockNavigate = jest.fn();
+    const mockProducts = [
+        {
+            _id: "p1",
+            name: "Product 1",
+            slug: "product-1-slug",
+            price: 99.99,
+            description: "test description",
+        },
+    ];
+    const mockCategory = { name: "Test Category" };
+
+    beforeEach(() => {
+        jest.clearAllMocks();
+        useNavigate.mockReturnValue(mockNavigate);
+        useParams.mockReturnValue({ slug: "test-category" });
+    });
+
+    // Visibility test
+    test("should render the 'More Details' button after products load", async () => {
+        // Arrange
+        axios.get.mockResolvedValueOnce({
+            data: { products: mockProducts, category: mockCategory },
+        });
+
+        // Act
+        render(<CategoryProduct />);
+
+        // Assert
+        const detailsBtn = await screen.findByText("More Details");
+        expect(detailsBtn).toBeInTheDocument();
+    });
+
+    // Interaction/Navigation test
+    test("should navigate to the correct URL when 'More Details' is clicked", async () => {
+        // Arrange
+        axios.get.mockResolvedValueOnce({
+            data: { products: mockProducts, category: mockCategory },
+        });
+
+        // Act
+        render(<CategoryProduct />);
+        const detailsBtn = await screen.findByText("More Details");
+        fireEvent.click(detailsBtn);
+
+        // Assert
+        expect(mockNavigate).toHaveBeenCalledWith("/product/product-1-slug");
     });
 });
