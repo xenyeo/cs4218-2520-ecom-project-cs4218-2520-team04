@@ -50,42 +50,42 @@ describe("Auth Controller Unit Tests", () => {
             req.body = testReq;
             delete req.body.name;
             await registerController(req, res);
-            expect(res.send).toHaveBeenCalledWith(expect.objectContaining({ error: "Name is Required" }));
+            expect(res.send).toHaveBeenCalledWith(expect.objectContaining({ error: "Name is required" }));
         });
 
         it("should return error if email is missing", async () => {
             req.body = testReq;
             delete req.body.email;
             await registerController(req, res);
-            expect(res.send).toHaveBeenCalledWith(expect.objectContaining({ message: "Email is Required" }));
+            expect(res.send).toHaveBeenCalledWith(expect.objectContaining({ message: "Email is required" }));
         });
 
         it("should return error if password is missing", async () => {
             req.body = testReq;
             delete req.body.password;
             await registerController(req, res);
-            expect(res.send).toHaveBeenCalledWith(expect.objectContaining({ message: "Password is Required" }));
+            expect(res.send).toHaveBeenCalledWith(expect.objectContaining({ message: "Password is required" }));
         });
 
         it("should return error if phone is missing", async () => {
             req.body = testReq;
             delete req.body.phone;
             await registerController(req, res);
-            expect(res.send).toHaveBeenCalledWith(expect.objectContaining({ message: "Phone no is Required" }));
+            expect(res.send).toHaveBeenCalledWith(expect.objectContaining({ message: "Phone number is required" }));
         });
 
         it("should return error if address is missing", async () => {
             req.body = testReq;
             delete req.body.address;
             await registerController(req, res);
-            expect(res.send).toHaveBeenCalledWith(expect.objectContaining({ message: "Address is Required" }));
+            expect(res.send).toHaveBeenCalledWith(expect.objectContaining({ message: "Address is required" }));
         });
 
         it("should return error if answer is missing", async () => {
             req.body = testReq;
             delete req.body.answer;
             await registerController(req, res);
-            expect(res.send).toHaveBeenCalledWith(expect.objectContaining({ message: "Answer is Required" }));
+            expect(res.send).toHaveBeenCalledWith(expect.objectContaining({ message: "Answer is required" }));
         });
 
 
@@ -104,7 +104,7 @@ describe("Auth Controller Unit Tests", () => {
             expect(res.status).toHaveBeenCalledWith(201);
             expect(res.send).toHaveBeenCalledWith(expect.objectContaining({
                 success: true,
-                message: "User Register Successfully",
+                message: "User registered successfully",
             }));
         });
 
@@ -117,7 +117,7 @@ describe("Auth Controller Unit Tests", () => {
             expect(res.status).toHaveBeenCalledWith(200);
             expect(res.send).toHaveBeenCalledWith(expect.objectContaining({
                 success: false,
-                message: "Already Register please login",
+                message: "Already registered, please log in",
             }));
         });
 
@@ -128,7 +128,7 @@ describe("Auth Controller Unit Tests", () => {
             await registerController(req, res);
             expect(res.status).toHaveBeenCalledWith(500);
             expect(res.send).toHaveBeenCalledWith(expect.objectContaining({
-                message: "Errro in Registeration",
+                message: "Error in registration",
             }));
         })
 
@@ -175,7 +175,7 @@ describe("Auth Controller Unit Tests", () => {
 
             expect(res.status).toHaveBeenCalledWith(404);
             expect(res.send).toHaveBeenCalledWith(expect.objectContaining({
-                message: "Email is not registerd",
+                message: "Email is not registered",
             }));
         });
 
@@ -195,7 +195,7 @@ describe("Auth Controller Unit Tests", () => {
 
             expect(res.status).toHaveBeenCalledWith(200);
             expect(res.send).toHaveBeenCalledWith(expect.objectContaining({
-                message: "Invalid Password",
+                message: "Invalid password",
             }));
         });
 
@@ -223,7 +223,7 @@ describe("Auth Controller Unit Tests", () => {
             expect(userModel.findByIdAndUpdate).toHaveBeenCalled();
             expect(res.status).toHaveBeenCalledWith(200);
             expect(res.send).toHaveBeenCalledWith(expect.objectContaining({
-                message: "Password Reset Successfully",
+                message: "Password reset successfully",
             }));
         });
 
@@ -234,7 +234,7 @@ describe("Auth Controller Unit Tests", () => {
 
             expect(res.status).toHaveBeenCalledWith(404);
             expect(res.send).toHaveBeenCalledWith(expect.objectContaining({
-                message: "Wrong Email Or Answer",
+                message: "Wrong email or answer",
             }));
         });
 
@@ -243,7 +243,7 @@ describe("Auth Controller Unit Tests", () => {
             await forgotPasswordController(req, res);
             expect(res.status).toHaveBeenCalledWith(400);
             expect(res.send).toHaveBeenCalledWith(expect.objectContaining({
-                message: "Emai is required",
+                message: "Email is required",
             }));
         });
 
@@ -252,7 +252,7 @@ describe("Auth Controller Unit Tests", () => {
             await forgotPasswordController(req, res);
             expect(res.status).toHaveBeenCalledWith(400);
             expect(res.send).toHaveBeenCalledWith(expect.objectContaining({
-                message: "answer is required",
+                message: "Answer is required",
             }));
         });
 
@@ -261,7 +261,7 @@ describe("Auth Controller Unit Tests", () => {
             await forgotPasswordController(req, res);
             expect(res.status).toHaveBeenCalledWith(400);
             expect(res.send).toHaveBeenCalledWith(expect.objectContaining({
-                message: "New Password is required",
+                message: "New password is required",
             }));
         });
 
@@ -274,6 +274,343 @@ describe("Auth Controller Unit Tests", () => {
             expect(res.send).toHaveBeenCalledWith(expect.objectContaining({
                 message: "Something went wrong",
             }));
+        });
+    });
+
+    // --- UPDATE PROFILE TESTS ---
+    describe("updateProfileController", () => {
+        it("should return 404 if user not found", async () => {
+            req.user = { _id: "user123" };
+            req.body = { name: "New", password: "", phone: "1", address: "A" };
+
+            userModel.findById.mockResolvedValue(null);
+
+            await updateProfileController(req, res);
+
+            expect(userModel.findById).toHaveBeenCalledWith("user123");
+            expect(res.status).toHaveBeenCalledWith(404);
+            expect(res.send).toHaveBeenCalledWith(
+            expect.objectContaining({
+                success: false,
+                message: "User not found",
+            })
+            );
+        });
+
+        it("should return 400 if password exists and is < 6 chars", async () => {
+            req.user = { _id: "user123" };
+            req.body = { name: "New", password: "123", phone: "1", address: "A" };
+
+            userModel.findById.mockResolvedValue({
+            _id: "user123",
+            name: "Old",
+            password: "oldhash",
+            phone: "999",
+            address: "OldAddr",
+            });
+
+            await updateProfileController(req, res);
+
+            expect(res.status).toHaveBeenCalledWith(400);
+            expect(res.send).toHaveBeenCalledWith(
+            expect.objectContaining({
+                success: false,
+                message: "Password must be at least 6 characters long",
+            })
+            );
+            expect(hashPassword).not.toHaveBeenCalled();
+            expect(userModel.findByIdAndUpdate).not.toHaveBeenCalled();
+        });
+
+        it("should update profile without hashing if password not provided", async () => {
+            req.user = { _id: "user123" };
+            req.body = { name: "New Name", password: "", phone: "111", address: "NewAddr" };
+
+            const existingUser = {
+            _id: "user123",
+            name: "Old",
+            password: "oldhash",
+            phone: "999",
+            address: "OldAddr",
+            };
+
+            userModel.findById.mockResolvedValue(existingUser);
+
+            const updatedUser = {
+            ...existingUser,
+            name: "New Name",
+            phone: "111",
+            address: "NewAddr",
+            // password stays oldhash
+            password: "oldhash",
+            };
+
+            userModel.findByIdAndUpdate.mockResolvedValue(updatedUser);
+
+            await updateProfileController(req, res);
+
+            expect(hashPassword).not.toHaveBeenCalled();
+
+            expect(userModel.findByIdAndUpdate).toHaveBeenCalledWith(
+            "user123",
+            {
+                name: "New Name",
+                password: "oldhash",
+                phone: "111",
+                address: "NewAddr",
+            },
+            { new: true }
+            );
+
+            expect(res.status).toHaveBeenCalledWith(200);
+            expect(res.send).toHaveBeenCalledWith(
+            expect.objectContaining({
+                success: true,
+                message: "Profile updated successfully",
+                updatedUser,
+            })
+            );
+        });
+
+        it("should update profile and hash password when password provided (>= 6)", async () => {
+            req.user = { _id: "user123" };
+            req.body = {
+            name: "New Name",
+            password: "newpass123",
+            phone: "111",
+            address: "NewAddr",
+            };
+
+            const existingUser = {
+            _id: "user123",
+            name: "Old",
+            password: "oldhash",
+            phone: "999",
+            address: "OldAddr",
+            };
+
+            userModel.findById.mockResolvedValue(existingUser);
+            hashPassword.mockResolvedValue("newhash");
+
+            const updatedUser = {
+            ...existingUser,
+            name: "New Name",
+            phone: "111",
+            address: "NewAddr",
+            password: "newhash",
+            };
+
+            userModel.findByIdAndUpdate.mockResolvedValue(updatedUser);
+
+            await updateProfileController(req, res);
+
+            expect(hashPassword).toHaveBeenCalledWith("newpass123");
+
+            expect(userModel.findByIdAndUpdate).toHaveBeenCalledWith(
+            "user123",
+            {
+                name: "New Name",
+                password: "newhash",
+                phone: "111",
+                address: "NewAddr",
+            },
+            { new: true }
+            );
+
+            expect(res.status).toHaveBeenCalledWith(200);
+            expect(res.send).toHaveBeenCalledWith(
+            expect.objectContaining({
+                success: true,
+                message: "Profile updated successfully",
+                updatedUser,
+            })
+            );
+        });
+
+        it("should handle unexpected errors and return 400", async () => {
+            req.user = { _id: "user123" };
+            req.body = { name: "New Name", password: "", phone: "111", address: "NewAddr" };
+
+            userModel.findById.mockRejectedValue(new Error("DB Error"));
+
+            await updateProfileController(req, res);
+
+            expect(res.status).toHaveBeenCalledWith(400);
+            expect(res.send).toHaveBeenCalledWith(
+            expect.objectContaining({
+                success: false,
+                message: "Error while updating profile",
+            })
+            );
+        });
+
+        it("should fallback to existing user fields when name/phone/address are missing", async () => {
+            req.user = { _id: "user123" };
+            // name/phone/address intentionally undefined (forces fallback)
+            req.body = { password: "" };
+
+            const existingUser = {
+                _id: "user123",
+                name: "OldName",
+                password: "oldhash",
+                phone: "999",
+                address: "OldAddr",
+            };
+
+            userModel.findById.mockResolvedValue(existingUser);
+
+            const updatedUser = { ...existingUser };
+            userModel.findByIdAndUpdate.mockResolvedValue(updatedUser);
+
+            await updateProfileController(req, res);
+
+            expect(userModel.findByIdAndUpdate).toHaveBeenCalledWith(
+                "user123",
+                {
+                name: "OldName",      // fallback
+                password: "oldhash",  // fallback
+                phone: "999",         // fallback
+                address: "OldAddr",   // fallback
+                },
+                { new: true }
+            );
+
+            expect(res.status).toHaveBeenCalledWith(200);
+            expect(res.send).toHaveBeenCalledWith(
+                expect.objectContaining({
+                success: true,
+                message: "Profile updated successfully",
+                })
+            );
+        });
+
+        it("when email missing: sends 400 (and does not reset password)", async () => {
+            req.body = { email: "", answer: "blue", newPassword: "new123" };
+
+            await forgotPasswordController(req, res);
+
+            expect(res.status).toHaveBeenCalledWith(400);
+            expect(res.send).toHaveBeenCalledWith(
+                expect.objectContaining({ message: "Email is required" })
+            );
+
+            expect(userModel.findOne).not.toHaveBeenCalled();
+            expect(userModel.findByIdAndUpdate).not.toHaveBeenCalled();
+        });
+    });
+
+    // --- ORDER TESTS ---
+    describe("Order Controllers", () => {
+        describe("getOrdersController", () => {
+            it("should return orders for the logged-in user", async () => {
+            req.user = { _id: "user123" };
+
+            const mockOrders = [{ _id: "o1" }, { _id: "o2" }];
+
+            // Mimic: orderModel.find(...).populate(...).populate(...) -> resolves orders
+            const populate2 = jest.fn().mockResolvedValue(mockOrders);
+            const populate1 = jest.fn().mockReturnValue({ populate: populate2 });
+
+            orderModel.find.mockReturnValue({ populate: populate1 });
+
+            await getOrdersController(req, res);
+
+            expect(orderModel.find).toHaveBeenCalledWith({ buyer: "user123" });
+            expect(populate1).toHaveBeenCalledWith("products", "-photo");
+            expect(populate2).toHaveBeenCalledWith("buyer", "name");
+            expect(res.json).toHaveBeenCalledWith(mockOrders);
+            });
+
+            it("should return 500 if database throws error", async () => {
+            req.user = { _id: "user123" };
+
+            orderModel.find.mockImplementation(() => {
+                throw new Error("DB Error");
+            });
+
+            await getOrdersController(req, res);
+
+            expect(res.status).toHaveBeenCalledWith(500);
+            expect(res.send).toHaveBeenCalledWith(
+                expect.objectContaining({
+                success: false,
+                message: "Error while getting orders",
+                })
+            );
+            });
+        });
+
+        describe("getAllOrdersController", () => {
+            it("should return all orders sorted by createdAt desc", async () => {
+            const mockOrders = [{ _id: "o1" }];
+
+            // Mimic: orderModel.find({}).populate(...).populate(...).sort(...) -> resolves orders
+            const sortMock = jest.fn().mockResolvedValue(mockOrders);
+            const populate2 = jest.fn().mockReturnValue({ sort: sortMock });
+            const populate1 = jest.fn().mockReturnValue({ populate: populate2 });
+
+            orderModel.find.mockReturnValue({ populate: populate1 });
+
+            await getAllOrdersController(req, res);
+
+            expect(orderModel.find).toHaveBeenCalledWith({});
+            expect(populate1).toHaveBeenCalledWith("products", "-photo");
+            expect(populate2).toHaveBeenCalledWith("buyer", "name");
+            expect(sortMock).toHaveBeenCalledWith({ createdAt: "-1" });
+            expect(res.json).toHaveBeenCalledWith(mockOrders);
+            });
+
+            it("should return 500 on error", async () => {
+            orderModel.find.mockImplementation(() => {
+                throw new Error("DB Error");
+            });
+
+            await getAllOrdersController(req, res);
+
+            expect(res.status).toHaveBeenCalledWith(500);
+            expect(res.send).toHaveBeenCalledWith(
+                expect.objectContaining({
+                success: false,
+                message: "Error while getting orders",
+                })
+            );
+            });
+        });
+
+        describe("orderStatusController", () => {
+            it("should update order status and return updated order", async () => {
+            req.params = { orderId: "order123" };
+            req.body = { status: "Shipped" };
+
+            const updated = { _id: "order123", status: "Shipped" };
+            orderModel.findByIdAndUpdate.mockResolvedValue(updated);
+
+            await orderStatusController(req, res);
+
+            expect(orderModel.findByIdAndUpdate).toHaveBeenCalledWith(
+                "order123",
+                { status: "Shipped" },
+                { new: true }
+            );
+            expect(res.json).toHaveBeenCalledWith(updated);
+            });
+
+            it("should return 500 on error", async () => {
+            req.params = { orderId: "order123" };
+            req.body = { status: "Shipped" };
+
+            orderModel.findByIdAndUpdate.mockRejectedValue(new Error("DB Error"));
+
+            await orderStatusController(req, res);
+
+            expect(res.status).toHaveBeenCalledWith(500);
+            expect(res.send).toHaveBeenCalledWith(
+                expect.objectContaining({
+                success: false,
+                message: "Error while updating order",
+                })
+            );
+            });
         });
     });
 
